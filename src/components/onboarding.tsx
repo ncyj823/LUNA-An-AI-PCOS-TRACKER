@@ -42,15 +42,19 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         data: { user },
       } = await supabase.auth.getUser()
 
+      if (!user?.id) {
+        setErrorMessage('You must be signed in before saving your profile.')
+        return
+      }
+
       const payload: Record<string, unknown> = {
+        id: user.id,
         name: formData.name,
         date_of_birth: formData.dateOfBirth || null,
         weight_kg: formData.weightKg ? Number(formData.weightKg) : null,
       }
 
-      if (user?.id) payload.id = user.id
-
-      const { error } = await supabase.from('profiles').upsert(payload)
+      const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' })
 
       if (error) {
         setErrorMessage(error.message)
@@ -58,8 +62,8 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         onComplete?.(formData)
         setIsComplete(true)
       }
-    } catch (err: any) {
-      setErrorMessage(err?.message ?? String(err))
+    } catch (error: unknown) {
+      setErrorMessage(error instanceof Error ? error.message : String(error))
     } finally {
       setIsSubmitting(false)
     }

@@ -71,3 +71,9 @@ export default defineConfig([
   },
 ])
 ```
+
+## Supabase setup
+
+The onboarding form writes to `public.profiles` with the signed-in user's `id`. If you see `new row violates row-level security policy for table "profiles"`, apply the matching RLS policies in Supabase so the owner can insert, update, and read their own row.
+
+Use the SQL in [supabase/migrations/20260526_profiles_policies.sql](supabase/migrations/20260526_profiles_policies.sql) as your starting point.
