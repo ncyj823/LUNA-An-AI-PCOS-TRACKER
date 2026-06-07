@@ -83,7 +83,7 @@ export default function Insights() {
     void loadData()
   }, [])
 
-  const hasEnoughData = useMemo(() => logs.length > 15 || cycles.length > 0, [logs.length, cycles.length])
+  const hasEnoughData = useMemo(() => logs.length >= 15, [logs.length])
 
   const handleGenerate = async () => {
     if (!hasEnoughData) {
@@ -128,7 +128,9 @@ export default function Insights() {
         </div>
 
         {!isLoading && !hasEnoughData && (
-          <p style={styles.notice}>No data found yet. Start by logging at least one daily entry or cycle.</p>
+          <p style={styles.notice}>
+            Log at least 15 daily entries to generate your first AI insight. You have {logs.length}/15 entries so far.
+          </p>
         )}
 
         <button

@@ -3,6 +3,7 @@ import { supabase } from '../supabase'
 import CycleLogger from './CycleLogger'
 import DailyLogger from './DailyLogger'
 import Insights from './Insights'
+import { calculatePCOSScore, getPCOSRiskLevel } from '../lib/pcosScore'
 
 type NavItem = 'home' | 'cycle' | 'daily' | 'insights'
 
@@ -52,7 +53,6 @@ export default function Dashboard() {
 
       <section style={styles.main}>
         <div style={styles.panel}>
-          <p style={styles.kicker}>Dashboard</p>
           {activeItem === 'home' && <HomePanel setActive={setActiveItem} />}
           {activeItem === 'cycle' && <CycleLogger />}
           {activeItem === 'daily' && <DailyLogger />}
@@ -67,6 +67,8 @@ function HomePanel({ setActive }: { setActive: (id: NavItem) => void }) {
   const [lastPeriod, setLastPeriod] = useState<string | null>(null)
   const [daysUntil, setDaysUntil] = useState<number | null>(null)
   const [loggedToday, setLoggedToday] = useState<boolean>(false)
+  const [pcosScore, setPcosScore] = useState(0)
+  const [riskLevel, setRiskLevel] = useState<'low' | 'moderate' | 'high'>('low')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -99,7 +101,12 @@ function HomePanel({ setActive }: { setActive: (id: NavItem) => void }) {
             .eq('user_id', user.id)
             .order('start_date', { ascending: false })
             .limit(6),
-          supabase.from('daily_logs').select('log_date').eq('user_id', user.id).eq('log_date', todayStr).limit(1),
+          supabase
+            .from('daily_logs')
+            .select('facial_hair,skin_condition,mood,spotting,blood_clotting,log_date')
+            .eq('user_id', user.id)
+            .order('log_date', { ascending: false })
+            .limit(120),
         ])
 
         if (cyclesRes.error) throw cyclesRes.error
@@ -129,8 +136,22 @@ function HomePanel({ setActive }: { setActive: (id: NavItem) => void }) {
           }
         }
 
-        const logs = logsRes.data ?? []
-        if (mounted) setLoggedToday(logs.length > 0)
+        const logs = (logsRes.data ?? []) as Array<{
+          facial_hair?: string
+          skin_condition?: string
+          mood?: string
+          spotting?: boolean
+          blood_clotting?: boolean
+          log_date?: string
+        }>
+
+        if (mounted) {
+          setLoggedToday(logs.some(log => log.log_date === todayStr))
+          const score = calculatePCOSScore(logs, cycles)
+          const riskLevel = getPCOSRiskLevel(score)
+          setPcosScore(score)
+          setRiskLevel(riskLevel)
+        }
       } catch (err: unknown) {
         if (mounted) setError(err instanceof Error ? err.message : String(err))
       } finally {
@@ -168,6 +189,12 @@ function HomePanel({ setActive }: { setActive: (id: NavItem) => void }) {
             <div style={{ flex: 1, padding: 16, borderRadius: 12, background: '#fff', border: '1px solid #efe0e8' }}>
               <p style={{ margin: 0, color: '#7d4d61', fontWeight: 700 }}>Today's log</p>
               <p style={{ margin: '8px 0 0', fontSize: '1.1rem' }}>{loggedToday ? 'Logged' : 'Not logged'}</p>
+            </div>
+            <div style={{ flex: 1, padding: 16, borderRadius: 12, background: '#fff', border: '1px solid #efe0e8' }}>
+              <p style={{ margin: 0, color: '#7d4d61', fontWeight: 700 }}>PCOS Risk</p>
+              <p style={{ margin: '8px 0 0', fontSize: '1.1rem' }}>
+                {pcosScore}/100 — {riskLevel}
+              </p>
             </div>
           </div>
 
