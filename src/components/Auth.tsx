@@ -50,8 +50,8 @@ export default function Auth({ onSignedUp }: AuthProps) {
   ]
 
   return (
-    <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff7fb', padding: '24px' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', maxWidth: '900px', width: '100%', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 20px 60px rgba(159,63,106,0.15)' }}>
+    <div style={{ height: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff7fb', padding: '0' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', maxWidth: '100%', width: '100%', height: '100%', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 20px 60px rgba(159,63,106,0.15)' }}>
 
         <div style={{ background: '#9f3f6a', padding: '2.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
